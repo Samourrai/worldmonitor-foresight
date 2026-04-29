@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorldMonitor · Foresight Tracker · Deployment Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Syne:wght@600;700;800&display=swap');
+
+:root {
+  --bg:       #04070f;
+  --bg2:      #080d1a;
+  --bg3:      #0d1424;
+  --border:   #1a2540;
+  --border2:  #243358;
+  --text:     #c8d8f0;
+  --muted:    #4a6080;
+  --amber:    #f5a623;
+  --amber2:   #ffc455;
+  --cyan:     #22d3ee;
+  --green:    #34d399;
+  --red:      #f87171;
+  --violet:   #a78bfa;
+  --mono:     'IBM Plex Mono', monospace;
+  --display:  'Syne', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* Grid bg */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(34,211,238,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,211,238,.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* ── Sticky header ─────────────────────────────── */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,7,15,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 56px;
+}
+
+.header-brand {
+  display: flex; align-items: center; gap: 10px;
+  white-space: nowrap;
+}
+.header-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: blink 2.4s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+.header-title {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.01em;
+}
+
+.progress-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+  border-radius: 2px;
+  transition: width .4s ease;
+}
+.progress-label {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  min-width: 70px;
+  text-align: right;
+}
+
+/* OS Toggle */
+.os-toggle {
+  display: flex;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.os-btn {
+  background: transparent;
+  border: none;
+  padding: 5px 14px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.os-btn.active {
+  background: var(--amber);
+  color: var(--bg);
+  font-weight: 700;
+}
+
+/* ── Layout ────────────────────────────────────── */
+.container {
+  position: relative; z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+
+/* ── Phase header ──────────────────────────────── */
+.phase {
+  margin-bottom: 8px;
+}
+
+.phase-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .2s;
+}
+.phase-header:hover { border-color: var(--border2); }
+.phase-header.done  { border-color: #1a3a28; }
+
+.phase-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+  transition: all .3s;
+}
+.phase-header.done .phase-num {
+  background: var(--green);
+  color: var(--bg);
+}
+.phase-header.partial .phase-num {
+  background: var(--amber);
+  color: var(--bg);
+}
+
+.phase-title {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8f0ff;
+  flex: 1;
+}
+.phase-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.phase-chevron {
+  color: var(--muted);
+  font-size: 11px;
+  transition: transform .3s;
+}
+.phase-header.open .phase-chevron { transform: rotate(180deg); }
+
+.phase-body {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .4s ease;
+}
+.phase-body.open { max-height: 4000px; }
+
+/* ── Step ──────────────────────────────────────── */
+.step {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background .2s;
+}
+.step:last-child { border-bottom: none; }
+.step.done { background: rgba(52,211,153,.04); }
+
+.step-check {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-check input[type=checkbox] {
+  appearance: none;
+  width: 18px; height: 18px;
+  border: 1.5px solid var(--border2);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all .2s;
+}
+.step-check input[type=checkbox]:checked {
+  background: var(--green);
+  border-color: var(--green);
+}
+.step-check input[type=checkbox]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  color: var(--bg);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.step-content { flex: 1; min-width: 0; }
+
+.step-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #dde8ff;
+  margin-bottom: 4px;
+}
+.step.done .step-title { color: var(--muted); text-decoration: line-through; }
+
+.step-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+.step-desc a { color: var(--cyan); text-decoration: none; }
+.step-desc a:hover { text-decoration: underline; }
+
+/* ── Command block ─────────────────────────────── */
+.cmd-block {
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.cmd-label {
+  padding: 5px 12px;
+  background: var(--border);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cmd-label.mac  { border-left: 2px solid var(--cyan); }
+.cmd-label.win  { border-left: 2px solid var(--amber); }
+.cmd-label.both { border-left: 2px solid var(--violet); }
+
+.cmd-copy {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 0;
+  transition: color .2s;
+}
+.cmd-copy:hover { color: var(--amber); }
+.cmd-copy.copied { color: var(--green); }
+
+pre {
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: #a0c8f0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.7;
+  margin: 0;
+}
+
+pre .hl  { color: var(--amber2); }
+pre .kw  { color: var(--cyan); }
+pre .cm  { color: var(--muted); }
+pre .ok  { color: var(--green); }
+
+/* OS-specific blocks */
+.os-mac { display: block; }
+.os-win { display: none; }
+body.win .os-mac { display: none; }
+body.win .os-win { display: block; }
+
+/* ── Inline badge ──────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-size: 9px; font-weight: 700;
+  padding: 2px 7px; border-radius: 3px;
+  letter-spacing: .08em; text-transform: uppercase;
+  vertical-align: middle;
+}
+.badge-req  { background: #1a0a30; color: var(--violet); border: 1px solid #a78bfa40; }
+.badge-opt  { background: #1a1a0a; color: var(--amber);  border: 1px solid #f5a62340; }
+.badge-free { background: #0a1a10; color: var(--green);  border: 1px solid #34d39940; }
+
+/* ── Note box ──────────────────────────────────── */
+.note {
+  margin-top: 10px;
+  padding: 9px 14px;
+  border-radius: 5px;
+  border-left: 3px solid var(--amber);
+  background: #251d0a30;
+  font-size: 11px;
+  color: #a08050;
+  line-height: 1.6;
+}
+.note.info { border-color: var(--cyan); background: #0c203020; color: #507090; }
+.note.win  { border-color: var(--amber2); }
+
+/* ── Summary bar ───────────────────────────────── */
+.summary {
+  margin-top: 40px;
+  padding: 20px 24px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.summary-item { text-align: center; }
+.summary-num  { font-family: var(--display); font-size: 28px; font-weight: 800; color: var(--amber); }
+.summary-lbl  { font-size: 10px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-top: 2px; }
+
+/* ── Reset button ──────────────────────────────── */
+.reset-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all .2s;
+}
+.reset-btn:hover { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- ── Sticky header ── -->
+<div class="header">
+  <div class="header-brand">
+    <div class="header-dot"></div>
+    <div class="header-title">WorldMonitor · Foresight · Deploy</div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">0 / 24 done</div>
+  </div>
+
+  <div class="os-toggle">
+    <button class="os-btn active" id="btnMac" onclick="setOS('mac')">⌘ macOS / Linux</button>
+    <button class="os-btn"        id="btnWin" onclick="setOS('win')">⊞ Windows</button>
+  </div>
+</div>
+
+<!-- ── Main ── -->
+<div class="container">
+
+  <!-- Phase 1 -->
+  <div class="phase" id="ph1">
+    <div class="phase-header open" onclick="togglePhase('ph1')">
+      <div class="phase-num" id="ph1-num">1</div>
+      <div class="phase-title">Install tools</div>
+      <div class="phase-sub">Node.js · Vercel CLI · login</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body open">
+
+      <div class="step" id="s1">
+        <div class="step-check"><input type="checkbox" data-step="s1" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Verify Node.js v20+</div>
+          <div class="step-desc">Must be v20 or v22. Download at <a href="https://nodejs.org" target="_blank">nodejs.org</a> (LTS) if missing.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>node <span class="hl">--version</span>   <span class="cm"># must show v20.x or v22.x</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s2">
+        <div class="step-check"><input type="checkbox" data-step="s2" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Install Vercel CLI</div>
+          <div class="step-desc">Installs the <code>vercel</code> command globally.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>npm install <span class="hl">-g</span> vercel</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s3">
+        <div class="step-check"><input type="checkbox" data-step="s3" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Login to Vercel</div>
+          <div class="step-desc">Opens a browser. Create a free account at <a href="https://vercel.com" target="_blank">vercel.com</a> if needed.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>vercel login</pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase" id="ph2">
+    <div class="phase-header" onclick="togglePhase('ph2')">
+      <div class="phase-num" id="ph2-num">2</div>
+      <div class="phase-title">Upstash Redis</div>
+      <div class="phase-sub">Free database for live data caching</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step" id="s4">
+        <div class="step-check"><input type="checkbox" data-step="s4" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Create Upstash database <span class="badge badge-free">free</span></div>
+          <div class="step-desc">
+            1. Go to <a href="https://upstash.com" target="_blank">upstash.com</a> → sign up<br>
+            2. Click <strong>Create Database</strong><br>
+            3. Name: <code>worldmonitor</code> · Region: <strong>EU-West-1</strong> · TLS: on<br>
+            4. Click <strong>Create</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s5">
+        <div class="step-check"><input type="checkbox" data-step="s5" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Copy Redis credentials</div>
+          <div class="step-desc">Dashboard → <strong>REST API</strong> tab. Copy both values into a notepad — you'll need them in steps 8 and 11.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">copy from upstash dashboard</div>
+            <pre>UPSTASH_REDIS_REST_URL   = https://<span class="hl">xxx</span>.upstash.io
+UPSTASH_REDIS_REST_TOKEN = <span class="hl">AXxxxxxxxxxxxx==</span></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase" id="ph3">
+    <div class="phase-header" onclick="togglePhase('ph3')">
+      <div class="phase-num" id="ph3-num">3</div>
+      <div class="phase-title">Anthropic API key</div>
+      <div class="phase-sub">Powers the Foresight AI analysis</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step" id="s6">
+        <div class="step-check"><input type="checkbox" data-step="s6" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Get Anthropic key <span class="badge badge-req">required</span></div>
+          <div class="step-desc">
+            1. <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → sign up<br>
+            2. Settings → <strong>API Keys</strong> → <strong>Create Key</strong><br>
+            3. Copy it (shown only once). ~$0.003 per analysis.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div class="phase" id="ph4">
+    <div class="phase-header" onclick="togglePhase('ph4')">
+      <div class="phase-num" id="ph4-num">4</div>
+      <div class="phase-title">Extract & copy files</div>
+      <div class="phase-sub">Unzip WorldMonitor + add Foresight module</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step" id="s7">
+        <div class="step-check"><input type="checkbox" data-step="s7" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Extract worldmonitor-main.zip</div>
+          <div class="os-mac cmd-block">
+            <div class="cmd-label mac">macOS / linux <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>unzip worldmonitor-main.zip
+cd worldmonitor-main</pre>
+          </div>
+          <div class="os-win cmd-block">
+            <div class="cmd-label win">windows <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre><span class="cm"># Right-click zip → "Extract All" → choose folder
+# Then open PowerShell:</span>
+cd C:\path\to\worldmonitor-main</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s8">
+        <div class="step-check"><input type="checkbox" data-step="s8" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Extract worldmonitor-foresight.zip and copy files</div>
+          <div class="step-desc">Extract the foresight zip, then copy into the worldmonitor folder.</div>
+          <div class="os-mac cmd-block">
+            <div class="cmd-label mac">macOS / linux <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>mkdir -p src/foresight
+cp /path/to/foresight/src/foresight/* src/foresight/
+cp /path/to/foresight/api/foresight-analyze.js api/</pre>
+          </div>
+          <div class="os-win cmd-block">
+            <div class="cmd-label win">windows — file explorer <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre><span class="cm"># In File Explorer, drag these into worldmonitor-main\src\foresight\</span>
+  types.ts
+  signalMap.ts
+  foresightStore.ts
+  ForesightPanel.ts
+
+<span class="cm"># Drag this into worldmonitor-main\api\</span>
+  foresight-analyze.js</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s9">
+        <div class="step-check"><input type="checkbox" data-step="s9" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Install dependencies</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal — run from worldmonitor-main/ <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>npm install   <span class="cm"># ~300MB, takes 1–3 minutes</span></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase 5 -->
+  <div class="phase" id="ph5">
+    <div class="phase-header" onclick="togglePhase('ph5')">
+      <div class="phase-num" id="ph5-num">5</div>
+      <div class="phase-title">Code edits</div>
+      <div class="phase-sub">Fix Panel import · register in main.ts · create .env.local</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step" id="s10">
+        <div class="step-check"><input type="checkbox" data-step="s10" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Find the real Panel base class path</div>
+          <div class="os-mac cmd-block">
+            <div class="cmd-label mac">macOS / linux <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>grep -rn <span class="hl">"export.*class Panel"</span> src/
+<span class="cm"># note the file path — likely src/components/Panel.ts</span></pre>
+          </div>
+          <div class="os-win cmd-block">
+            <div class="cmd-label win">windows powershell <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>findstr /r /s <span class="hl">"export.*class Panel"</span> src\
+<span class="cm"># note the file path — likely src\components\Panel.ts</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s11">
+        <div class="step-check"><input type="checkbox" data-step="s11" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Fix ForesightPanel.ts — replace placeholder with real import</div>
+          <div class="step-desc">Open <code>src/foresight/ForesightPanel.ts</code> in your text editor.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">remove these lines at the top of ForesightPanel.ts</div>
+            <pre><span class="cm">// DELETE the placeholder block:</span>
+interface PanelBase { ... }
+declare const Panel: { ... }</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-label both">replace with (adjust path if needed)</div>
+            <pre><span class="kw">import</span> { Panel } <span class="kw">from</span> <span class="hl">'../components/Panel'</span>;
+
+<span class="kw">export class</span> ForesightPanel <span class="kw">extends</span> Panel {
+  <span class="kw">constructor</span>() {
+    <span class="kw">super</span>(<span class="hl">'foresight'</span>, <span class="hl">'Foresight'</span>, { resizable: <span class="kw">true</span> });
+    this.bindStoreEvents();
+    this.render();
+  }
+  <span class="cm">// Replace every this.container → this.content in the file</span>
+}</pre>
+          </div>
+          <div class="note">Tip: open another panel file (e.g. NewsPanel.ts) to see the exact constructor pattern used in this codebase.</div>
+        </div>
+      </div>
+
+      <div class="step" id="s12">
+        <div class="step-check"><input type="checkbox" data-step="s12" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Register in src/main.ts</div>
+          <div class="step-desc">Search for <code>SignalModal</code> in main.ts — that's Phase 6 of App.init(). Add these two lines there.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">add to src/main.ts — Phase 6 block</div>
+            <pre><span class="kw">import</span> { ForesightPanel } <span class="kw">from</span> <span class="hl">'./foresight/ForesightPanel'</span>;
+<span class="cm">// ... in the Phase 6 init block, same pattern as other panels:</span>
+<span class="kw">new</span> ForesightPanel(<span class="cm">/* container element */</span>);</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s13">
+        <div class="step-check"><input type="checkbox" data-step="s13" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Create .env.local in the project root</div>
+          <div class="step-desc">Create a new file named <strong>.env.local</strong> (leading dot, no .txt). Paste and fill in your values.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">content of .env.local</div>
+            <pre><span class="cm"># Redis (from Upstash step 5)</span>
+UPSTASH_REDIS_REST_URL=<span class="hl">https://xxx.upstash.io</span>
+UPSTASH_REDIS_REST_TOKEN=<span class="hl">AXxxxxxxxxxxxx==</span>
+
+<span class="cm"># Foresight AI (from Anthropic step 6)</span>
+ANTHROPIC_API_KEY=<span class="hl">sk-ant-api03-xxx</span>
+
+<span class="cm"># Optional — uncomment when you have them</span>
+<span class="cm"># GROQ_API_KEY=</span>
+<span class="cm"># FINNHUB_API_KEY=</span>
+<span class="cm"># FRED_API_KEY=</span>
+<span class="cm"># NASA_FIRMS_API_KEY=</span>
+<span class="cm"># ACLED_ACCESS_TOKEN=</span></pre>
+          </div>
+          <div class="note win">Windows: In File Explorer → View → tick "File name extensions" to confirm the file is .env.local not .env.local.txt</div>
+        </div>
+      </div>
+
+      <div class="step" id="s14">
+        <div class="step-check"><input type="checkbox" data-step="s14" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">TypeScript check — must pass before deploy</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>npm run typecheck   <span class="cm"># fix any errors before continuing</span></pre>
+          </div>
+          <div class="note info">If you see Panel import errors: adjust the import path in ForesightPanel.ts to match the actual location found in step 10.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase 6 -->
+  <div class="phase" id="ph6">
+    <div class="phase-header" onclick="togglePhase('ph6')">
+      <div class="phase-num" id="ph6-num">6</div>
+      <div class="phase-title">Local test <span class="badge badge-opt">optional</span></div>
+      <div class="phase-sub">Verify app + Foresight before deploying</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step" id="s15">
+        <div class="step-check"><input type="checkbox" data-step="s15" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Start dev server</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>npm run dev   <span class="cm"># opens http://localhost:5173</span></pre>
+          </div>
+          <div class="step-desc" style="margin-top:8px">Map loads. Panels are empty until Redis is seeded — that's normal.</div>
+        </div>
+      </div>
+
+      <div class="step" id="s16">
+        <div class="step-check"><input type="checkbox" data-step="s16" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Test Foresight edge function locally</div>
+          <div class="step-desc">Open a second terminal while dev server is running.</div>
+          <div class="os-mac cmd-block">
+            <div class="cmd-label mac">macOS / linux <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>curl -X POST http://localhost:5173/api/foresight-analyze \
+  -H "Content-Type: application/json" \
+  -d '{"subjectText": "Regulation IA Europe", "language": "fr"}'</pre>
+          </div>
+          <div class="os-win cmd-block">
+            <div class="cmd-label win">windows powershell <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>Invoke-RestMethod -Method POST `
+  -Uri "http://localhost:5173/api/foresight-analyze" `
+  -ContentType "application/json" `
+  -Body '{"subjectText": "Regulation IA Europe", "language": "fr"}'</pre>
+          </div>
+          <div class="note info">Expected: JSON with <code>"ok":true</code> and 9-11 variables. If 500 → check ANTHROPIC_API_KEY in .env.local</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase 7 -->
+  <div class="phase" id="ph7">
+    <div class="phase-header" onclick="togglePhase('ph7')">
+      <div class="phase-num" id="ph7-num">7</div>
+      <div class="phase-title">Vercel project setup</div>
+      <div class="phase-sub">Link · set env vars · first deploy</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step" id="s17">
+        <div class="step-check"><input type="checkbox" data-step="s17" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Link project to Vercel</div>
+          <div class="step-desc">Run from inside the worldmonitor-main folder.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>vercel link</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-label both">answer the prompts</div>
+            <pre>Set up and deploy?         → <span class="ok">Y</span>
+Which scope?               → <span class="hl">(your account)</span>
+Link to existing project?  → <span class="ok">N</span>
+Project name?              → <span class="hl">worldmonitor</span>
+Code location?             → <span class="hl">./</span>
+Modify settings?           → <span class="ok">N</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s18">
+        <div class="step-check"><input type="checkbox" data-step="s18" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Set environment variables <span class="badge badge-req">3 required</span></div>
+          <div class="step-desc">Run each command, paste the value when prompted, select <strong>all 3 environments</strong>.</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal — run all three <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>vercel env add UPSTASH_REDIS_REST_URL
+vercel env add UPSTASH_REDIS_REST_TOKEN
+vercel env add ANTHROPIC_API_KEY</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-label both">optional — add as you get keys</div>
+            <pre><span class="cm"># vercel env add GROQ_API_KEY</span>
+<span class="cm"># vercel env add FINNHUB_API_KEY</span>
+<span class="cm"># vercel env add FRED_API_KEY</span>
+<span class="cm"># vercel env add NASA_FIRMS_API_KEY</span>
+<span class="cm"># vercel env add ACLED_ACCESS_TOKEN</span>
+<span class="cm"># vercel env add AVIATIONSTACK_API</span>
+<span class="cm"># vercel env add AISSTREAM_API_KEY</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s19">
+        <div class="step-check"><input type="checkbox" data-step="s19" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Deploy to production</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>vercel --prod</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-label both">expected output</div>
+            <pre>[00:45] <span class="ok">Build Completed</span>
+[00:47] <span class="ok">✓ Deployed to production.</span>
+        <span class="hl">https://worldmonitor-abc123.vercel.app</span></pre>
+          </div>
+          <div class="note">Save the URL — that's your live app.</div>
+        </div>
+      </div>
+
+      <div class="step" id="s20">
+        <div class="step-check"><input type="checkbox" data-step="s20" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Verify build in Vercel dashboard</div>
+          <div class="step-desc">
+            <a href="https://vercel.com/dashboard" target="_blank">vercel.com/dashboard</a> → your project → <strong>Deployments</strong> → latest → <strong>Build Logs</strong><br><br>
+            ✅ Build Completed<br>
+            ✅ <code>api/foresight-analyze</code> listed under Functions<br>
+            ❌ No TypeScript errors (fix then re-run <code>vercel --prod</code>)
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase 8 -->
+  <div class="phase" id="ph8">
+    <div class="phase-header" onclick="togglePhase('ph8')">
+      <div class="phase-num" id="ph8-num">8</div>
+      <div class="phase-title">Seed Redis</div>
+      <div class="phase-sub">Populate live data so panels aren't empty</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step" id="s21">
+        <div class="step-check"><input type="checkbox" data-step="s21" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Pull production env vars locally</div>
+          <div class="cmd-block">
+            <div class="cmd-label both">terminal <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>vercel env pull .env.vercel.local</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s22">
+        <div class="step-check"><input type="checkbox" data-step="s22" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Run seed scripts</div>
+          <div class="os-mac cmd-block">
+            <div class="cmd-label mac">macOS / linux <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>source .env.vercel.local
+./scripts/run-seeders.sh</pre>
+          </div>
+          <div class="os-win cmd-block">
+            <div class="cmd-label win">windows powershell <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre><span class="cm"># Load env vars</span>
+Get-Content .env.vercel.local | ForEach-Object {
+  if ($_ -match '^([^#=][^=]*)=(.+)$') {
+    [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2])
+  }
+}
+<span class="cm"># Run seeders individually</span>
+node scripts/seed-earthquakes.mjs
+node scripts/seed-weather.mjs
+node scripts/seed-conflicts.mjs
+node scripts/seed-crypto.mjs</pre>
+          </div>
+          <div class="note info">Each seeder prints: <code>✓ Seeded X records → Redis key: &lt;key&gt;</code></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Phase 9 -->
+  <div class="phase" id="ph9">
+    <div class="phase-header" onclick="togglePhase('ph9')">
+      <div class="phase-num" id="ph9-num">9</div>
+      <div class="phase-title">Verify everything works</div>
+      <div class="phase-sub">App · Foresight endpoint · browser test</div>
+      <div class="phase-chevron">▼</div>
+    </div>
+    <div class="phase-body">
+
+      <div class="step" id="s23">
+        <div class="step-check"><input type="checkbox" data-step="s23" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Test Foresight edge function in production</div>
+          <div class="os-mac cmd-block">
+            <div class="cmd-label mac">macOS / linux — replace YOUR_APP <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>curl -X POST https://<span class="hl">YOUR_APP</span>.vercel.app/api/foresight-analyze \
+  -H "Content-Type: application/json" \
+  -d '{"subjectText": "Transition energetique Sahel", "language": "fr"}'</pre>
+          </div>
+          <div class="os-win cmd-block">
+            <div class="cmd-label win">windows powershell — replace YOUR_APP <button class="cmd-copy" onclick="copy(this)">copy</button></div>
+            <pre>Invoke-RestMethod -Method POST `
+  -Uri "https://<span class="hl">YOUR_APP</span>.vercel.app/api/foresight-analyze" `
+  -ContentType "application/json" `
+  -Body '{"subjectText": "Transition energetique Sahel", "language": "fr"}'</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-label both">expected</div>
+            <pre>{ "ok": <span class="ok">true</span>, "result": { "variables": [ <span class="cm">...9-11 items...</span> ] } }</pre>
+          </div>
+          <div class="cmd-block">
+            <div class="cmd-label both">troubleshooting</div>
+            <pre>502 → <span class="hl">ANTHROPIC_API_KEY</span> missing or invalid in Vercel env
+429 → rate limit hit, wait 1 hour
+500 → check Vercel build logs for errors</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step" id="s24">
+        <div class="step-check"><input type="checkbox" data-step="s24" onchange="tick(this)"></div>
+        <div class="step-content">
+          <div class="step-title">Browser checklist</div>
+          <div class="step-desc">
+            Open <strong>https://YOUR_APP.vercel.app</strong> and verify:<br><br>
+            ✅ Dashboard loads, map visible<br>
+            ✅ At least one data panel shows content (earthquakes, crypto, etc.)<br>
+            ✅ Foresight panel visible → click it → type a subject<br>
+            ✅ Analysis runs in 8-15 seconds → MICMAC plot + variable list appear<br>
+            ✅ Reload page → Foresight subject still there (localStorage persistence)
+          </div>
+          <div class="note info">Check the browser DevTools → Network tab. You should see <code>POST /api/foresight-analyze</code> returning 200. No direct calls to api.anthropic.com.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary">
+    <div class="summary-item">
+      <div class="summary-num" id="summaryDone">0</div>
+      <div class="summary-lbl">Steps done</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num">24</div>
+      <div class="summary-lbl">Total steps</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num">~53</div>
+      <div class="summary-lbl">Minutes total</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-num">3</div>
+      <div class="summary-lbl">Required services</div>
+    </div>
+    <div style="flex:1; display:flex; align-items:flex-end; justify-content:flex-end;">
+      <button class="reset-btn" onclick="resetAll()">Reset all checkboxes</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ── OS toggle ──────────────────────────────────
+function setOS(os) {
+  document.body.classList.toggle('win', os === 'win');
+  document.getElementById('btnMac').classList.toggle('active', os === 'mac');
+  document.getElementById('btnWin').classList.toggle('active', os === 'win');
+  localStorage.setItem('wm_deploy_os', os);
+}
+
+// ── Phase toggle ───────────────────────────────
+function togglePhase(id) {
+  const ph = document.getElementById(id);
+  const header = ph.querySelector('.phase-header');
+  const body   = ph.querySelector('.phase-body');
+  const isOpen = header.classList.contains('open');
+  header.classList.toggle('open', !isOpen);
+  body.classList.toggle('open', !isOpen);
+}
+
+// ── Checkbox logic ─────────────────────────────
+const TOTAL = 24;
+
+function tick(cb) {
+  const step = document.getElementById(cb.dataset.step);
+  step.classList.toggle('done', cb.checked);
+  saveState();
+  updateProgress();
+  updatePhaseStatuses();
+}
+
+function updateProgress() {
+  const boxes  = document.querySelectorAll('input[type=checkbox]');
+  const done   = [...boxes].filter(b => b.checked).length;
+  const pct    = Math.round((done / TOTAL) * 100);
+  document.getElementById('progressFill').style.width  = pct + '%';
+  document.getElementById('progressLabel').textContent  = done + ' / ' + TOTAL + ' done';
+  document.getElementById('summaryDone').textContent    = done;
+}
+
+function updatePhaseStatuses() {
+  document.querySelectorAll('.phase').forEach(ph => {
+    const boxes = ph.querySelectorAll('input[type=checkbox]');
+    const done  = [...boxes].filter(b => b.checked).length;
+    const num   = ph.querySelector('.phase-num');
+    const header= ph.querySelector('.phase-header');
+    header.classList.remove('done', 'partial');
+    if (done === boxes.length && boxes.length > 0) {
+      header.classList.add('done');
+      num.textContent = '✓';
+    } else if (done > 0) {
+      header.classList.add('partial');
+      num.textContent = num.dataset.n;
+    } else {
+      num.textContent = num.dataset.n;
+    }
+  });
+}
+
+// ── Persist state ──────────────────────────────
+function saveState() {
+  const state = {};
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    state[cb.dataset.step] = cb.checked;
+  });
+  localStorage.setItem('wm_deploy_state', JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const state = JSON.parse(localStorage.getItem('wm_deploy_state') || '{}');
+    document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      if (state[cb.dataset.step]) {
+        cb.checked = true;
+        document.getElementById(cb.dataset.step).classList.add('done');
+      }
+    });
+  } catch(e) {}
+  updateProgress();
+  updatePhaseStatuses();
+}
+
+function resetAll() {
+  if (!confirm('Reset all checkboxes?')) return;
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('done'));
+  document.querySelectorAll('.phase-num').forEach(n => n.textContent = n.dataset.n);
+  document.querySelectorAll('.phase-header').forEach(h => h.classList.remove('done','partial'));
+  localStorage.removeItem('wm_deploy_state');
+  updateProgress();
+}
+
+// ── Copy buttons ───────────────────────────────
+function copy(btn) {
+  const pre = btn.closest('.cmd-block').querySelector('pre');
+  const text = pre.innerText.replace(/\s*#.*/g, '').replace(/\n{2,}/g, '\n').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// ── Init ───────────────────────────────────────
+document.querySelectorAll('.phase-num').forEach((n, i) => {
+  n.dataset.n = String(i + 1);
+});
+
+// Set first phase open
+const firstBody = document.querySelector('.phase-body');
+if (firstBody) firstBody.classList.add('open');
+
+const savedOS = localStorage.getItem('wm_deploy_os') || 'mac';
+setOS(savedOS);
+loadState();
+</script>
+</body>
+</html>
